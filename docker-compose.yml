@@ -24,3 +24,46 @@ services:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+
+  kibana:
+    build:
+      context: kibana
+    restart: always
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    build:
+      context: logstash
+    volumes:
+      - type: bind
+        source: ./logstash/config/logstash.yml
+        target: /usr/share/logstash/config/logstash.yml
+        read_only: true
+      - type: bind
+        source: ./logstash/pipeline
+        target: /usr/share/logstash/pipeline
+        read_only: true
+    ports:
+      - 5044:5044
+      - 5000:5000/tcp
+      - 5000:5000/udp
+      - 9600:9600
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    build:
+      context: filebeat
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./filebeat/data:/usr/share/filebeat/data:rw                        # Persistence data
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ../logs:/var/log/app/logs                    # Logs files on filebeat container
+    restart: on-failure
+    depends_on:
+      - logstash
