@@ -1,0 +1,7 @@
+---
+# configuration custom ES
+cluster.name: "docker-cluster"
+network.host: 0.0.0.0
+xpack.security.enabled: false
+discovery.type: single-node
+xpack.monitoring.collection.enabled: true
